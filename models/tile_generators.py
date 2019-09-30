@@ -37,7 +37,7 @@ def diagonal_b_generator(board):
     def diag_generator(i):
         if i < board.size:  # Left triangle
             row_range = range(i + 1)
-            col_range = range(board.size - i, board.size)
+            col_range = range((board.size - 1) - i, board.size)
         else:  # Right triangle
             i -= board.size - 1
             row_range = range(i, board.size)
