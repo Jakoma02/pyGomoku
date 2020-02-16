@@ -4,6 +4,8 @@ from models.observable import Observable
 
 
 class TileModel:
+    __slots__ = ("symbol", "state", "x", "y")
+
     class Symbols(Enum):
         EMPTY = auto()
         CROSS = auto()

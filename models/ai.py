@@ -42,8 +42,15 @@ class MinimaxAI:
 
         minimax_results = []
         for new_tile in all_empty_tiles(board):
-            minimax_result = self.minimax(self._board_with_tile(board, new_tile, cross_turn), depth - 1,
-                                          not cross_turn, new_tile)
+            # TODO: Dont really change the TileModels, the gui doesnt have to get updated
+            # Add new symbol to board (temporarily)
+            symbol = TileModel.Symbols.CROSS if cross_turn else TileModel.Symbols.CIRCLE
+            board.place(new_tile.x, new_tile.y, symbol)
+            minimax_result = self.minimax(board, depth - 1, not cross_turn, new_tile)
+
+            # Remove the added symbol
+            board.clear_tile(new_tile.x, new_tile.y)
+
             minimax_results.append(minimax_result)
 
         if cross_turn:

@@ -5,6 +5,7 @@ from .constants import Direction
 
 class BoardModel:
     WINNING_COUNT = 5
+    __slots__ = ("size", "_board")
 
     def __init__(self, size):
         self.size = size
@@ -26,6 +27,10 @@ class BoardModel:
             return False
         tile.symbol.set(symbol)
         return self
+
+    def clear_tile(self, x, y):
+        tile = self._board[x][y]
+        tile.symbol.set(TileModel.Symbols.EMPTY)
 
     def next_tile(self, r, c, direction):
         class TileException(Exception):
