@@ -29,4 +29,4 @@ def n_tet_counts(board, n):
                     same = 1
                 last = symbol
 
-        return counts
+        return tuple(counts)
