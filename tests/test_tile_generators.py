@@ -1,7 +1,9 @@
 import unittest
 
 from models.board import BoardModel
-from models.tile_generators import horizontal_generator, vertical_generator, diagonal_a_generator, diagonal_b_generator
+from models.tile import TileModel
+from models.tile_generators import horizontal_generator, vertical_generator, diagonal_a_generator, diagonal_b_generator, \
+    all_empty_tiles
 
 
 class TestDirectionGenerators(unittest.TestCase):
@@ -61,6 +63,50 @@ class TestDirectionGenerators(unittest.TestCase):
             [(3, 3)]
         ]
         self._test_generator(diagonal_a_generator, expected)
+
+
+class TestAllEmpty(unittest.TestCase):
+    def setUp(self) -> None:
+        self.board = BoardModel(3)
+
+    def test_empty(self):
+        expected = [
+            (0, 0),
+            (0, 1),
+            (0, 2),
+            (1, 0),
+            (1, 1),
+            (1, 2),
+            (2, 0),
+            (2, 1),
+            (2, 2),
+        ]
+
+        res = [(a.x, a.y) for a in all_empty_tiles(self.board)]
+        self.assertEqual(res, expected)
+
+    def test_full(self):
+        expected = []
+
+        res = [(a.x, a.y) for a in all_empty_tiles(self.board)]
+        self.assertEqual(res, expected)
+
+    def test_half_full(self):  # I'm an optimist ;)
+        self.board.place(0, 0, TileModel.Symbols.CIRCLE)
+        self.board.place(2, 0, TileModel.Symbols.CIRCLE)
+        self.board.place(2, 2, TileModel.Symbols.CIRCLE)
+        self.board.place(1, 2, TileModel.Symbols.CROSS)
+        self.board.place(1, 1, TileModel.Symbols.CROSS)
+
+        expected = [
+            (0, 1),
+            (0, 2),
+            (1, 0),
+            (2, 1)
+        ]
+
+        res = [(a.x, a.y) for a in all_empty_tiles(self.board)]
+        self.assertEqual(expected, res)
 
 
 if __name__ == '__main__':
