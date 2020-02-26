@@ -40,6 +40,7 @@ class TestCounting(unittest.TestCase):
         self.board.place(2, 0, TileModel.Symbols.CIRCLE)
 
         doubles = analysis.n_tet_counts(self.board, 2)
+
         self.assertEqual(doubles, (0, 0))
 
     def test_last_symbol(self):
@@ -69,6 +70,7 @@ class TestCounting(unittest.TestCase):
 
         doubles = analysis.n_tet_counts(self.board, 3)
         self.assertEqual(doubles, (0, 2))
+
 
 if __name__ == '__main__':
     unittest.main()
