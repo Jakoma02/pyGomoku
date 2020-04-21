@@ -12,7 +12,7 @@ class Game:
         self.cross_turn = True
         self.player_turn = True
         self.multiplayer = True
-        self.ai = MinimaxAI(self.board, 2)
+        self.ai = MinimaxAI(self.board, 4)
         self.rater = SimpleRater()
 
     def play_move(self, x, y):

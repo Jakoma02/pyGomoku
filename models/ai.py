@@ -29,14 +29,18 @@ class MinimaxAI:
         symbol = TileModel.Symbols.CROSS if cross_turn else TileModel.Symbols.CIRCLE
         return board.clone().place(tile.x, tile.y, symbol)
 
-    def minimax(self, board, depth, cross_turn, last_move_tile=None):
+    def minimax(self, board, depth, cross_turn, alpha, beta, last_move_tile=None):
         """
+        Cross maximizes, circle minimizes
+
         :param board:
         :param depth:
         :param cross_turn:
         :param last_move_tile:
         :return: Tile object and rating
         """
+        stop = False
+
         if depth == 0:
             return last_move_tile, self.rater.rate(board)
 
@@ -46,10 +50,28 @@ class MinimaxAI:
             # Add new symbol to board (temporarily)
             symbol = TileModel.Symbols.CROSS if cross_turn else TileModel.Symbols.CIRCLE
             board.place(new_tile.x, new_tile.y, symbol)
-            minimax_result = self.minimax(board, depth - 1, not cross_turn, new_tile)
+            minimax_result = self.minimax(board, depth - 1, not cross_turn,
+                                          alpha=alpha, beta=beta, last_move_tile=new_tile)
+
+            result_rating = minimax_result[1]
+
+            # Check alpha and beta
+            if (cross_turn and result_rating > beta) or (not cross_turn and result_rating < alpha):
+                # Don't go further, this result will be ignored
+                minimax_results = [minimax_result]
+                stop = True  # Still needs to be cleaned up
+
+            # Set new alpha/beta
+            if cross_turn and result_rating > alpha:
+                alpha = result_rating
+            elif not cross_turn and result_rating < beta:
+                beta = result_rating
 
             # Remove the added symbol
             board.clear_tile(new_tile.x, new_tile.y)
+
+            if stop:
+                break
 
             minimax_results.append(minimax_result)
 
@@ -60,5 +82,5 @@ class MinimaxAI:
         return best_tile
 
     def get_move(self, cross_turn):
-        tile, rating = self.minimax(self.board, self.depth, cross_turn)
+        tile, rating = self.minimax(self.board, self.depth, cross_turn, alpha=float("-inf"), beta=float("inf"))
         return tile.x, tile.y
