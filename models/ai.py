@@ -23,6 +23,7 @@ class MinimaxAI:
         self.board = board
         self.depth = depth
         self.rater = RandomRater()
+        # self.rater = PositionRater()
         self.i = 0   # to be removed
 
     @staticmethod
@@ -74,7 +75,7 @@ class MinimaxAI:
                 beta = result_rating
 
             # Remove the added symbol
-            board.clear_tile(new_tile.x, new_tile.y)
+            board.undo()
 
             if stop:
                 break

@@ -5,12 +5,13 @@ from .constants import Direction
 
 class BoardModel:
     WINNING_COUNT = 5
-    __slots__ = ("size", "_board")
+    __slots__ = ("size", "_board", "_added_tiles_stack")
 
     def __init__(self, size):
         self.size = size
         self._board = [[TileModel(x, y) for y in range(self.size)]
                        for x in range(self.size)]
+        self._added_tiles_stack = []  # So that we can undo
 
     def __getitem__(self, x):
         return self._board[x]
@@ -26,9 +27,16 @@ class BoardModel:
         if not tile.empty():
             return False
         tile.symbol.set(symbol)
+
+        self._added_tiles_stack.append((x, y))
         return self
 
-    def clear_tile(self, x, y):
+    def undo(self):
+        """
+        "Unplaces" last tile placement
+        """
+        x, y = self._added_tiles_stack.pop()
+
         tile = self._board[x][y]
         tile.symbol.set(TileModel.Symbols.EMPTY)
 
