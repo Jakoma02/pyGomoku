@@ -96,7 +96,7 @@ class BoardModel:
             x, y = self.next_tile(x, y, direction)
             self._board[x][y].state.set(TileModel.States.MARKED_AS_WIN)
         return self
-    
+
     def clone(self):
         cloned_board = BoardModel(self.size)
         cloned_board._board = [[tile.clone() for tile in row] for row in self._board]

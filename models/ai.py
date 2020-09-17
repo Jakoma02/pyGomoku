@@ -1,4 +1,4 @@
-from .static_raters import SimpleRater
+from .static_raters import SimpleRater, RandomRater
 from .tile_generators import all_empty_tiles
 from .tile import TileModel
 
@@ -22,7 +22,8 @@ class MinimaxAI:
     def __init__(self, board, depth):
         self.board = board
         self.depth = depth
-        self.rater = SimpleRater()
+        self.rater = RandomRater()
+        self.i = 0   # to be removed
 
     @staticmethod
     def _board_with_tile(board, tile, cross_turn):
@@ -39,6 +40,11 @@ class MinimaxAI:
         :param last_move_tile:
         :return: Tile object and rating
         """
+
+        if self.i % 1000 == 0:
+            print(self.i)
+        self.i += 1
+
         stop = False
 
         if depth == 0:
@@ -56,7 +62,7 @@ class MinimaxAI:
             result_rating = minimax_result[1]
 
             # Check alpha and beta
-            if (cross_turn and result_rating > beta) or (not cross_turn and result_rating < alpha):
+            if (cross_turn and result_rating >= beta) or (not cross_turn and result_rating <= alpha):
                 # Don't go further, this result will be ignored
                 minimax_results = [minimax_result]
                 stop = True  # Still needs to be cleaned up
@@ -82,5 +88,9 @@ class MinimaxAI:
         return best_tile
 
     def get_move(self, cross_turn):
-        tile, rating = self.minimax(self.board, self.depth, cross_turn, alpha=float("-inf"), beta=float("inf"))
+        detached_board = self.board.clone()
+        tile, rating = self.minimax(detached_board, self.depth, cross_turn, alpha=float("-inf"), beta=float("inf"))
+
+        role = "maximizing" if cross_turn else "minimizing"
+        print(f"Chose position with rating {rating}, was {role}")
         return tile.x, tile.y

@@ -6,7 +6,7 @@ from views.board import BoardView
 
 
 class GameController:
-    SIZE = 10
+    SIZE = 15
 
     def __init__(self, master):
         self.master = master
