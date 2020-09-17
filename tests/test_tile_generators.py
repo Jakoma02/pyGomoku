@@ -86,6 +86,11 @@ class TestAllEmpty(unittest.TestCase):
         self.assertEqual(res, expected)
 
     def test_full(self):
+        # Fill all positions
+        for i in range(3):
+            for j in range(3):
+                self.board.place(i, j, TileModel.Symbols.CIRCLE)
+
         expected = []
 
         res = [(a.x, a.y) for a in all_empty_tiles(self.board)]
