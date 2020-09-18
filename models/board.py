@@ -106,6 +106,9 @@ class BoardModel:
         return self
 
     def clone(self):
-        cloned_board = BoardModel(self.size)
+        # This could be subclassed
+        cls = self.__class__
+        cloned_board = cls(self.size)
+
         cloned_board._board = [[tile.clone() for tile in row] for row in self._board]
         return cloned_board
