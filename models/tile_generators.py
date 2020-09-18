@@ -127,6 +127,6 @@ def direction_neighbors(board, direction, x, y):
     elif direction == Direction.DIAGONAL_B:
         dir_neighbors = [(x - 1, y + 1), (x + 1, y - 1)]
 
-    result = list(filter(dir_neighbors,
-                         lambda pos: is_valid(board, pos[0], pos[1])))
+    result = list(filter(lambda pos: is_valid(board, pos[0], pos[1]),
+                         dir_neighbors))
     return result
