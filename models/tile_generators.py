@@ -79,3 +79,54 @@ def all_generators(board):
     for direction, generator in generators:
         for line in generator:
             yield line, direction
+
+
+def neighbors(board, x, y):
+    """
+    Generator of all neighbors of given position that are within bounds.
+    :param size: size of the board
+    :param x: x coordinate
+    :param y: y coordinate
+    """
+    for i in range(x - 1, x + 2):
+        if i < 0:
+            continue
+        if i >= board.size:
+            continue
+
+        for j in range(y - 1, y + 1):
+            if j < 0:
+                continue
+            if j >= board.size:
+                continue
+
+            if (i, j) == (x, y):
+                # This is me
+                continue
+
+            yield (i, j)
+
+
+def is_valid(board, x, y):
+    return \
+        0 <= x < board.size and \
+        0 <= y < board.size
+
+
+def direction_neighbors(board, direction, x, y):
+    """
+    Returns the two neighboring tiles' coordinates
+    in the given direction, if they are valid
+    """
+    if direction == Direction.HORIZONTAL:
+        dir_neighbors = [(x - 1, y), (x + 1, y)]
+    elif direction == Direction.VERTICAL:
+        dir_neighbors = [(x, y - 1), (x, y + 1)]
+    elif direction == Direction.DIAGONAL_A:
+        dir_neighbors = [(x - 1, y - 1), (x + 1, y + 1)]
+    elif direction == Direction.DIAGONAL_B:
+        dir_neighbors = [(x - 1, y + 1), (x + 1, y - 1)]
+
+    result = list(filter(dir_neighbors,
+                         lambda pos: is_valid(board, pos[0], pos[1])))
+    return result

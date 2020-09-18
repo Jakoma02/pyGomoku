@@ -1,4 +1,4 @@
-from .static_raters import SimpleRater, RandomRater
+from .raters import SimpleRater, RandomRater
 from .tile_generators import all_empty_tiles
 from .tile import TileModel
 
