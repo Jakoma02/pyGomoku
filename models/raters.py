@@ -1,5 +1,6 @@
 from random import randint
 from collections import namedtuple
+from copy import deepcopy
 
 from models.tile import TileModel
 from models.board import BoardModel
@@ -162,7 +163,7 @@ class SymbolGroup:
         if self.get_symbol() == TileModel.Symbols.CIRCLE:
             score = -score
 
-        print(f"Counting {score}, size is {size}")
+        # print(f"Counting {score}, size is {size}")
 
         return score
 
@@ -187,6 +188,7 @@ class RatedBoard(BoardModel):
     def reset(self):
         super().reset()
         self._reset_context()
+        return self
 
     def _reset_context(self):
         self.board_context = [[PositionContext() for _ in range(self.size)]
@@ -194,9 +196,11 @@ class RatedBoard(BoardModel):
         self._context_undo_stack = []
         self.rating = 0
 
-
     def place(self, x, y, symbol):
-        super().place(x, y, symbol)
+        placing_success = super().place(x, y, symbol)
+
+        if not placing_success:
+            return False
 
         position_context = self.board_context[x][y]
         undo_instructions = []
@@ -212,6 +216,8 @@ class RatedBoard(BoardModel):
             same_symbol_groups = []  # Tuples (coords, group)
             other_symbol_groups = []
 
+            assert len(same_symbol_groups) + len(other_symbol_groups) <= 2
+
             # Coords are needed for undo instructions
             for coords, group in zip(dir_neighbors, nei_groups):
                 if group is None:
@@ -219,7 +225,7 @@ class RatedBoard(BoardModel):
 
                 # Unrate all groups, will be rated again after
                 # they are (possibly) changed
-                print("Removing: ", end="")
+                # print("Removing: ", end="")
                 self.rating -= group.score()
 
                 if group.get_symbol() == symbol:
@@ -296,8 +302,11 @@ class RatedBoard(BoardModel):
 
         self._context_undo_stack.append(undo_instructions)
 
+
+        return self
+
     def _undo_extend(self, instruction):
-        print("Undoing extend")
+        # print("Undoing extend")
         self._undo_change(instruction)
 
         # Remove the block from the position
@@ -306,14 +315,20 @@ class RatedBoard(BoardModel):
         self.board_context[x][y].directions[direction] = None
 
     def _undo_change(self, instruction):
-        print("Undoing change")
+        # print("Undoing change")
         x, y, direction, state = instruction
 
         group = self.board_context[x][y].directions[direction]
 
         # Unrate group
-        print("Removing: ", end="")
-        self.rating -= group.score()
+        # print("Removing: ", end="")
+        try:
+            self.rating -= group.score()
+        except:
+            self.dump()
+            print(self.board_context[1][0].directions)
+            print()
+            print(f"Was undoing: {instruction}")
 
         group.set_state(state)
 
@@ -321,7 +336,7 @@ class RatedBoard(BoardModel):
         self.rating += group.score()
 
     def _undo_merge(self, instruction):
-        print("Undoing merge")
+        # print("Undoing merge")
         x1, x2, y1, y2, direction, local_state1, local_state2 = instruction
 
         group1 = self.board_context[x1][y1].directions[direction]
@@ -329,7 +344,7 @@ class RatedBoard(BoardModel):
 
         # Unrate - both groups have the same score, as one points to
         # the other
-        print("Removing: ", end="")
+        # print("Removing: ", end="")
         self.rating -= group1.score()
 
         # Force both local states
@@ -341,13 +356,13 @@ class RatedBoard(BoardModel):
         self.rating += group2.score()
 
     def _undo_create(self, instruction):
-        print("Undoing create")
+        # print("Undoing create")
         x, y, direction = instruction
 
         group = self.board_context[x][y].directions[direction]
 
         # Unrate group
-        print("Removing: ", end="")
+        # print("Removing: ", end="")
         self.rating -= group.score()
 
         # Delete group
@@ -370,3 +385,35 @@ class RatedBoard(BoardModel):
                 self._undo_merge(instruction)
             elif isinstance(instruction, UndoCreate):
                 self._undo_create(instruction)
+
+    def clone(self):
+        cloned = BoardModel.clone(self)
+        # TODO: These errors seem important
+        cloned.rating = self.rating
+        cloned.board_context = deepcopy(self.board_context)
+        cloned._context_undo_stack = deepcopy(self._context_undo_stack)
+
+        return cloned
+
+    def dump(self):
+        """
+        Print out board contents
+        """
+        # TODO: Move to main board class
+        for i in range(self.size):
+            row = []
+            for j in range(self.size):
+                tile = self._board[i][j]
+                symbol = tile.symbol.get()
+                str_symbol = ""
+
+                if symbol == TileModel.Symbols.CIRCLE:
+                    str_symbol = "o"
+                elif symbol == TileModel.Symbols.CROSS:
+                    str_symbol = "x"
+                elif symbol == TileModel.Symbols.EMPTY:
+                    str_symbol = " "
+
+                row.append(str_symbol)
+            str_row = "".join(row)
+            print(str_row)
