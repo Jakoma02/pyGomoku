@@ -1,24 +1,28 @@
 from models.board import BoardModel
 from models.tile import TileModel
 from models.observable import Observable
+from models.raters import RatedBoard
 from .ai import RandomAI, MinimaxAI
 
 
 class Game:
     def __init__(self, size):
-        self.board = BoardModel(size)
+        self.board = RatedBoard(size)
+        # self.board = BoardModel(size)
         self.active = Observable(self, True)
         self.cross_turn = True
         self.player_turn = True
         self.multiplayer = True
-        self.ai = MinimaxAI(self.board, 3)
+        self.ai = MinimaxAI(self.board, 2)
         # self.ai = RandomAI(self.board)
 
     def play_move(self, x, y):
         if not self.active.get():
             return
         symbol = TileModel.Symbols.CROSS if self.cross_turn else TileModel.Symbols.CIRCLE
-        if not self.board.place(x, y, symbol):
+
+        place_success = self.board.place(x, y, symbol)
+        if not place_success:
             return
         win_info = self.board.check_win()
         if win_info:

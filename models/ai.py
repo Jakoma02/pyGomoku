@@ -49,7 +49,9 @@ class MinimaxAI:
         stop = False
 
         if depth == 0:
-            return last_move_tile, self.rater.rate(board)
+            # rating = self.rater.rate(board)
+            rating = board.rating
+            return last_move_tile, rating
 
         minimax_results = []
         for new_tile in all_empty_tiles(board):
@@ -65,6 +67,7 @@ class MinimaxAI:
             # Check alpha and beta
             if (cross_turn and result_rating >= beta) or (not cross_turn and result_rating <= alpha):
                 # Don't go further, this result will be ignored
+                print("alpha-beta helped")
                 minimax_results = [minimax_result]
                 stop = True  # Still needs to be cleaned up
 
@@ -80,7 +83,10 @@ class MinimaxAI:
             if stop:
                 break
 
-            minimax_results.append(minimax_result)
+            # The rating that can be enforced after playing new_tile
+            added_tile_result = (new_tile, result_rating)
+
+            minimax_results.append(added_tile_result)
 
         if cross_turn:
             best_tile = max(minimax_results, key=lambda x: x[1])
@@ -90,6 +96,7 @@ class MinimaxAI:
 
     def get_move(self, cross_turn):
         detached_board = self.board.clone()
+        # detached_board = self.board  # Right, this is very much attached... :)
         tile, rating = self.minimax(detached_board, self.depth, cross_turn, alpha=float("-inf"), beta=float("inf"))
 
         role = "maximizing" if cross_turn else "minimizing"

@@ -9,7 +9,8 @@ from .constants import Direction
 from models.tile_generators import direction_neighbors
 
 
-UndoMerge = namedtuple("UndoMerge", ["x1", "x2", "y1", "y2", "direction",
+# (x1, y1), (x2, y2) are being merged, (x3, y3) is the position that merged them
+UndoMerge = namedtuple("UndoMerge", ["x1", "y1", "x2", "y2", "x3", "y3", "direction",
                                      "local_state1", "local_state2"])
 UndoCreate = namedtuple("UndoCreate", ["x", "y", "direction"])
 UndoChange = namedtuple("UndoChange", ["x", "y", "direction", "state"])
@@ -117,9 +118,24 @@ class SymbolGroup:
         my_root = self.root()
         other_root = other.root()
 
+        print("Before merge: ")
+        print(f"id1={id(self)}, id2={id(other)}")
+        print(f"  Root 1: {self.get_state()}")
+        print(f"  Root 2: {other.get_state()}")
+        print(f"  Local 1: {self.get_local_state()}")
+        print(f"  Local 2: {self.get_local_state()}")
+
+        assert my_root != other_root
+
         other_root._parent = my_root
         my_root._size += other_root._size
         my_root._blocked += other_root._blocked
+
+        print("After merge: ")
+        print(f"  Root 1: {self.get_state()}")
+        print(f"  Root 2: {other.get_state()}")
+        print(f"  Local 1: {self.get_local_state()}")
+        print(f"  Local 2: {self.get_local_state()}")
 
         assert my_root._symbol == other_root._symbol
         assert my_root._blocked <= 2
@@ -181,6 +197,9 @@ class PositionContext:
 
 
 class RatedBoard(BoardModel):
+    __slots__ = BoardModel.__slots__ + \
+        ("board_context", "_context_undo_stack", "rating")
+
     def __init__(self, size):
         super().__init__(size)
         self._reset_context()
@@ -197,6 +216,11 @@ class RatedBoard(BoardModel):
         self.rating = 0
 
     def place(self, x, y, symbol):
+        # print(f"Placing ({x}, {y})")
+        # print("Before:")
+        # self.dump()
+        # print()
+
         placing_success = super().place(x, y, symbol)
 
         if not placing_success:
@@ -216,8 +240,6 @@ class RatedBoard(BoardModel):
             same_symbol_groups = []  # Tuples (coords, group)
             other_symbol_groups = []
 
-            assert len(same_symbol_groups) + len(other_symbol_groups) <= 2
-
             # Coords are needed for undo instructions
             for coords, group in zip(dir_neighbors, nei_groups):
                 if group is None:
@@ -232,6 +254,12 @@ class RatedBoard(BoardModel):
                     same_symbol_groups.append((coords, group))
                 else:
                     other_symbol_groups.append((coords, group))
+
+            assert len(same_symbol_groups) + len(other_symbol_groups) <= 2
+
+            for coords, group in same_symbol_groups:
+                # Otherwise it can't have a neighbor of the same color
+                assert group.get_blocked() <= 1
 
             blocked_count = len(other_symbol_groups)
 
@@ -260,11 +288,11 @@ class RatedBoard(BoardModel):
 
                     x1, y1 = same_symbol_groups[0][0]
                     x2, y2 = same_symbol_groups[1][0]
-                    instruction = UndoMerge(x1, x2, y1, y2, direction,
+                    instruction = UndoMerge(x1, y1, x2, y2, x, y, direction,
                                             local_state1, local_state2)
                     undo_instructions.append(instruction)
 
-                    old_group.merge(second_group)
+                    second_group.merge(old_group)
 
                 else:
                     # Create undo EXTEND instruction
@@ -283,6 +311,11 @@ class RatedBoard(BoardModel):
                 # Create undo instructions
                 changed_x, changed_y = coords
                 state = group.get_state()
+
+                # TODO: Temp
+                t_size, t_symbol, t_blocked = state
+                assert symbol != t_symbol
+
                 instruction = UndoChange(changed_x, changed_y,
                                          direction, state)
                 undo_instructions.append(instruction)
@@ -300,10 +333,53 @@ class RatedBoard(BoardModel):
             for coords, group in other_symbol_groups:
                 self.rating += group.score()
 
+        undo_instructions.reverse()
+
         self._context_undo_stack.append(undo_instructions)
 
+        # self.dump()
 
+        # print(f"board: placed at ({x}, {y})")
+        # TODO: Look for crap in the stack
+        # print(f"board: stack: {self._context_undo_stack}")
+
+        self._check_invariants()
         return self
+
+    def _check_invariants(self):
+        for i in range(self.size):
+            for j in range(self.size):
+                tile = self[i][j]
+
+                groups = self.board_context[i][j].directions
+
+                for direction, group in groups.items():
+                    if tile.empty():
+                        assert group is None, f"Group ({i}, {j}) should be None in direction {direction}"
+                        continue
+
+                    assert group is not None, f"Group ({i}, {j}) should not be None in direction {direction}"
+                    assert group._parent != group
+
+                    in_chain = set([group])
+                    last = group
+
+                    while last._parent is not None:
+                        last = last._parent
+
+                        assert last not in in_chain
+                        in_chain.add(last)
+
+        for move_undo_instructions in self._context_undo_stack:
+            for instruction in move_undo_instructions:
+                if isinstance(instruction, UndoChange):
+                    x, y, direction, state = instruction
+                    group = self.board_context[x][y].directions[direction]
+                    symbol = self[x][y].symbol.get()
+
+                    assert group is not None, f"({x}, {y}) group should not be None in direction {direction}"
+                    assert symbol is not TileModel.Symbols.EMPTY, f"({x}, {y}) symbol in direction {direction}" \
+                                f"should not be empty"
 
     def _undo_extend(self, instruction):
         # print("Undoing extend")
@@ -313,6 +389,7 @@ class RatedBoard(BoardModel):
         x, y, direction, _ = instruction
 
         self.board_context[x][y].directions[direction] = None
+        # self._check_invariants()
 
     def _undo_change(self, instruction):
         # print("Undoing change")
@@ -326,7 +403,7 @@ class RatedBoard(BoardModel):
             self.rating -= group.score()
         except:
             self.dump()
-            print(self.board_context[1][0].directions)
+            print(self.board_context[x][y].directions)
             print()
             print(f"Was undoing: {instruction}")
 
@@ -335,12 +412,27 @@ class RatedBoard(BoardModel):
         # Rerate
         self.rating += group.score()
 
+        # It shouldn't be possible that blocked >= 2
+        assert group.get_blocked() < 2
+
+        # self._check_invariants()
+
     def _undo_merge(self, instruction):
         # print("Undoing merge")
-        x1, x2, y1, y2, direction, local_state1, local_state2 = instruction
+        x1, y1, x2, y2, x3, y3, direction, local_state1, local_state2 = instruction
 
         group1 = self.board_context[x1][y1].directions[direction]
         group2 = self.board_context[x2][y2].directions[direction]
+
+        self.dump()
+
+        print(f"UNmerging ({x1}, {y1}) and ({x2}, {y2}) with ({x3}, {y3})")
+        print(f"id1={id(group1)}, id2={id(group2)}")
+        print("Before unmerge: ")
+        print(f"  Root 1: {group1.get_state()}")
+        print(f"  Root 2: {group2.get_state()}")
+        print(f"  Local 1: {group1.get_local_state()}")
+        print(f"  Local 2: {group2.get_local_state()}")
 
         # Unrate - both groups have the same score, as one points to
         # the other
@@ -351,9 +443,24 @@ class RatedBoard(BoardModel):
         group1.force_local_state(local_state1)
         group2.force_local_state(local_state2)
 
+        # Remove the added tile (this bug took a looot of time to find :)
+        self.board_context[x3][y3].directions[direction] = None
+
         # Rerate both groups
         self.rating += group1.score()
         self.rating += group2.score()
+
+        print("After unmerge: ")
+        print(f"  Root 1: {group1.get_state()}")
+        print(f"  Root 2: {group2.get_state()}")
+        print(f"  Local 1: {group1.get_local_state()}")
+        print(f"  Local 2: {group2.get_local_state()}")
+
+        # It shouldn't be possible that both groups are fully blocked
+        assert group1.get_blocked() < 2
+        assert group2.get_blocked() < 2
+
+        # self._check_invariants()
 
     def _undo_create(self, instruction):
         # print("Undoing create")
@@ -368,15 +475,23 @@ class RatedBoard(BoardModel):
         # Delete group
         self.board_context[x][y].directions[direction] = None
 
-    def undo(self):
-        super().undo()
+        # self._check_invariants()
 
+    def undo(self):
         # All changes in the last method call
         move_undo_instructions = self._context_undo_stack.pop()
 
-        # instruction_set is not a set as in structure...
-        # but as in collection
+        # print("Before:")
+        # self.dump()
+
+        super().undo()
+
+        # print("\nAfter:")
+        # self.dump()
+        # print()
+
         for instruction in move_undo_instructions:
+            # print(f"board: Undoing {instruction}")
             if isinstance(instruction, UndoChange):
                 self._undo_change(instruction)
             elif isinstance(instruction, UndoExtend):
@@ -385,6 +500,9 @@ class RatedBoard(BoardModel):
                 self._undo_merge(instruction)
             elif isinstance(instruction, UndoCreate):
                 self._undo_create(instruction)
+
+        self._check_invariants()
+
 
     def clone(self):
         cloned = BoardModel.clone(self)
@@ -403,7 +521,7 @@ class RatedBoard(BoardModel):
         for i in range(self.size):
             row = []
             for j in range(self.size):
-                tile = self._board[i][j]
+                tile = self._board[j][i]
                 symbol = tile.symbol.get()
                 str_symbol = ""
 
