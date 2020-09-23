@@ -130,3 +130,76 @@ def direction_neighbors(board, direction, x, y):
     result = list(filter(lambda pos: is_valid(board, pos[0], pos[1]),
                          dir_neighbors))
     return result
+
+def close_tiles(board, x, y):
+    # At most 2
+    for i in range(-2, 3):
+        for j in range(-2, 3):
+            nx, ny = (x + i, y + j)
+
+            if not is_valid(board, nx, ny):
+                continue
+
+            if (nx, ny) != (x, y):
+                yield board[nx][ny]
+
+def is_close_to_filled(board, x, y):
+    for tile in close_tiles(board, x, y):
+        if not tile.empty():
+            return True
+
+    return False
+
+relevant_usage_var = 0
+
+def relevant_tiles(board):
+    global relevant_usage_var
+
+    relevant_usage_var += 1
+    yielded_any = False
+
+    for tile in all_empty_tiles(board):
+        if is_close_to_filled(board, tile.x, tile.y):
+            yielded_any = True
+            yield tile
+
+    if not yielded_any:
+        # Return the tile in the middle
+        center_coord = board.size // 2
+        yield board[center_coord][center_coord]
+
+def relevant_usage():
+    global relevant_usage_var
+    return relevant_usage_var
+
+def next_in_direction(board, tile, direction):
+    x, y = tile.x, tile.y
+
+    if direction == Direction.HORIZONTAL:
+        nx, ny = (x + 1, y)
+    elif direction == Direction.VERTICAL:
+        nx, ny = (x, y + 1)
+    elif direction == Direction.DIAGONAL_A:
+        nx, ny = (x + 1, y + 1)
+    elif direction == Direction.DIAGONAL_B:
+        nx, ny = (x + 1, y - 1)
+
+    if is_valid(board, nx, ny):
+        return board[nx][ny]
+    return None
+
+def prev_in_direction(board, tile, direction):
+    x, y = tile.x, tile.y
+
+    if direction == Direction.HORIZONTAL:
+        nx, ny = (x - 1, y)
+    elif direction == Direction.VERTICAL:
+        nx, ny = (x, y - 1)
+    elif direction == Direction.DIAGONAL_A:
+        nx, ny = (x - 1, y - 1)
+    elif direction == Direction.DIAGONAL_B:
+        nx, ny = (x - 1, y + 1)
+
+    if is_valid(board, nx, ny):
+        return board[nx][ny]
+    return None
