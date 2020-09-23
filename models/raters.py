@@ -46,11 +46,14 @@ class SimpleRater:
 
 
 class SymbolGroup:
-    def __init__(self, symbol, blocked):
+    def __init__(self, symbol, blocked, x, y, direction):
         self._parent = None  # DFU-like, for merging the groups
         self._size = 1
         self._symbol = symbol  # ?
         self._blocked = blocked  # 0-2, from how many sides it is protected
+        self.x = x
+        self.y = y
+        self.direction = direction
 
     def root(self):
         if self._parent is None:
@@ -221,6 +224,7 @@ class RatedBoard(BoardModel):
                               for _ in range(self.size)]
         self._context_undo_stack = []
         self.rating = 0
+        self.groups = []
 
     def place(self, x, y, symbol):
         # print(f"Placing ({x}, {y})")
@@ -276,7 +280,7 @@ class RatedBoard(BoardModel):
 
             if not same_symbol_groups:
                 # Must create own group
-                new_group = SymbolGroup(symbol, blocked_count)
+                new_group = SymbolGroup(symbol, blocked_count, x, y, direction)
                 self.groups.append(new_group)
 
                 my_group = new_group
