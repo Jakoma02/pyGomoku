@@ -2,7 +2,7 @@ from models.board import BoardModel
 from models.tile import TileModel
 from models.observable import Observable
 from models.raters import RatedBoard
-from .ai import RandomAI, MinimaxAI
+from .ai import RandomAI, MinimaxAI, RuleAI, CombinedAI
 
 
 class Game:
@@ -13,8 +13,10 @@ class Game:
         self.cross_turn = True
         self.player_turn = True
         self.multiplayer = True
-        self.ai = MinimaxAI(self.board, 2)
+        # self.ai = MinimaxAI(self.board, 4)
         # self.ai = RandomAI(self.board)
+        # self.ai = RuleAI(self.board)
+        self.ai = CombinedAI(self.board, 4)
 
     def play_move(self, x, y):
         if not self.active.get():
