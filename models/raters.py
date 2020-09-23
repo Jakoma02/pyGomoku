@@ -16,6 +16,9 @@ UndoCreate = namedtuple("UndoCreate", ["x", "y", "direction"])
 UndoChange = namedtuple("UndoChange", ["x", "y", "direction", "state"])
 UndoExtend = namedtuple("UndoExtend", ["x", "y", "direction", "state"])
 
+# def print(x):
+    # # :)
+    # pass
 
 class RandomRater:
     def rate(self, board):
@@ -118,12 +121,12 @@ class SymbolGroup:
         my_root = self.root()
         other_root = other.root()
 
-        print("Before merge: ")
-        print(f"id1={id(self)}, id2={id(other)}")
-        print(f"  Root 1: {self.get_state()}")
-        print(f"  Root 2: {other.get_state()}")
-        print(f"  Local 1: {self.get_local_state()}")
-        print(f"  Local 2: {self.get_local_state()}")
+        # print("Before merge: ")
+        # print(f"id1={id(self)}, id2={id(other)}")
+        # print(f"  Root 1: {self.get_state()}")
+        # print(f"  Root 2: {other.get_state()}")
+        # print(f"  Local 1: {self.get_local_state()}")
+        # print(f"  Local 2: {self.get_local_state()}")
 
         assert my_root != other_root
 
@@ -131,11 +134,11 @@ class SymbolGroup:
         my_root._size += other_root._size
         my_root._blocked += other_root._blocked
 
-        print("After merge: ")
-        print(f"  Root 1: {self.get_state()}")
-        print(f"  Root 2: {other.get_state()}")
-        print(f"  Local 1: {self.get_local_state()}")
-        print(f"  Local 2: {self.get_local_state()}")
+        # print("After merge: ")
+        # print(f"  Root 1: {self.get_state()}")
+        # print(f"  Root 2: {other.get_state()}")
+        # print(f"  Local 1: {self.get_local_state()}")
+        # print(f"  Local 2: {self.get_local_state()}")
 
         assert my_root._symbol == other_root._symbol
         assert my_root._blocked <= 2
@@ -198,11 +201,15 @@ class PositionContext:
 
 class RatedBoard(BoardModel):
     __slots__ = BoardModel.__slots__ + \
-        ("board_context", "_context_undo_stack", "rating")
+        ("board_context", "_context_undo_stack", "rating", "groups",
+         "place_call_count")  # To be removed
 
     def __init__(self, size):
         super().__init__(size)
         self._reset_context()
+
+        self.place_call_count = 0
+        self.groups = []
 
     def reset(self):
         super().reset()
@@ -220,6 +227,8 @@ class RatedBoard(BoardModel):
         # print("Before:")
         # self.dump()
         # print()
+
+        self.place_call_count += 1
 
         placing_success = super().place(x, y, symbol)
 
@@ -268,6 +277,8 @@ class RatedBoard(BoardModel):
             if not same_symbol_groups:
                 # Must create own group
                 new_group = SymbolGroup(symbol, blocked_count)
+                self.groups.append(new_group)
+
                 my_group = new_group
 
                 instruction = UndoCreate(x, y, direction)
@@ -347,39 +358,40 @@ class RatedBoard(BoardModel):
         return self
 
     def _check_invariants(self):
-        for i in range(self.size):
-            for j in range(self.size):
-                tile = self[i][j]
+        pass
+        # for i in range(self.size):
+            # for j in range(self.size):
+                # tile = self[i][j]
 
-                groups = self.board_context[i][j].directions
+                # groups = self.board_context[i][j].directions
 
-                for direction, group in groups.items():
-                    if tile.empty():
-                        assert group is None, f"Group ({i}, {j}) should be None in direction {direction}"
-                        continue
+                # for direction, group in groups.items():
+                    # if tile.empty():
+                        # assert group is None, f"Group ({i}, {j}) should be None in direction {direction}"
+                        # continue
 
-                    assert group is not None, f"Group ({i}, {j}) should not be None in direction {direction}"
-                    assert group._parent != group
+                    # assert group is not None, f"Group ({i}, {j}) should not be None in direction {direction}"
+                    # assert group._parent != group
 
-                    in_chain = set([group])
-                    last = group
+                    # in_chain = set([group])
+                    # last = group
 
-                    while last._parent is not None:
-                        last = last._parent
+                    # while last._parent is not None:
+                        # last = last._parent
 
-                        assert last not in in_chain
-                        in_chain.add(last)
+                        # assert last not in in_chain
+                        # in_chain.add(last)
 
-        for move_undo_instructions in self._context_undo_stack:
-            for instruction in move_undo_instructions:
-                if isinstance(instruction, UndoChange):
-                    x, y, direction, state = instruction
-                    group = self.board_context[x][y].directions[direction]
-                    symbol = self[x][y].symbol.get()
+        # for move_undo_instructions in self._context_undo_stack:
+            # for instruction in move_undo_instructions:
+                # if isinstance(instruction, UndoChange):
+                    # x, y, direction, state = instruction
+                    # group = self.board_context[x][y].directions[direction]
+                    # symbol = self[x][y].symbol.get()
 
-                    assert group is not None, f"({x}, {y}) group should not be None in direction {direction}"
-                    assert symbol is not TileModel.Symbols.EMPTY, f"({x}, {y}) symbol in direction {direction}" \
-                                f"should not be empty"
+                    # assert group is not None, f"({x}, {y}) group should not be None in direction {direction}"
+                    # assert symbol is not TileModel.Symbols.EMPTY, f"({x}, {y}) symbol in direction {direction}" \
+                                # f"should not be empty"
 
     def _undo_extend(self, instruction):
         # print("Undoing extend")
@@ -402,10 +414,11 @@ class RatedBoard(BoardModel):
         try:
             self.rating -= group.score()
         except:
+            pass
             self.dump()
-            print(self.board_context[x][y].directions)
-            print()
-            print(f"Was undoing: {instruction}")
+            # print(self.board_context[x][y].directions)
+            # print()
+            # print(f"Was undoing: {instruction}")
 
         group.set_state(state)
 
@@ -424,15 +437,15 @@ class RatedBoard(BoardModel):
         group1 = self.board_context[x1][y1].directions[direction]
         group2 = self.board_context[x2][y2].directions[direction]
 
-        self.dump()
+        # self.dump()
 
-        print(f"UNmerging ({x1}, {y1}) and ({x2}, {y2}) with ({x3}, {y3})")
-        print(f"id1={id(group1)}, id2={id(group2)}")
-        print("Before unmerge: ")
-        print(f"  Root 1: {group1.get_state()}")
-        print(f"  Root 2: {group2.get_state()}")
-        print(f"  Local 1: {group1.get_local_state()}")
-        print(f"  Local 2: {group2.get_local_state()}")
+        # print(f"UNmerging ({x1}, {y1}) and ({x2}, {y2}) with ({x3}, {y3})")
+        # print(f"id1={id(group1)}, id2={id(group2)}")
+        # print("Before unmerge: ")
+        # print(f"  Root 1: {group1.get_state()}")
+        # print(f"  Root 2: {group2.get_state()}")
+        # print(f"  Local 1: {group1.get_local_state()}")
+        # print(f"  Local 2: {group2.get_local_state()}")
 
         # Unrate - both groups have the same score, as one points to
         # the other
@@ -450,11 +463,11 @@ class RatedBoard(BoardModel):
         self.rating += group1.score()
         self.rating += group2.score()
 
-        print("After unmerge: ")
-        print(f"  Root 1: {group1.get_state()}")
-        print(f"  Root 2: {group2.get_state()}")
-        print(f"  Local 1: {group1.get_local_state()}")
-        print(f"  Local 2: {group2.get_local_state()}")
+        # print("After unmerge: ")
+        # print(f"  Root 1: {group1.get_state()}")
+        # print(f"  Root 2: {group2.get_state()}")
+        # print(f"  Local 1: {group1.get_local_state()}")
+        # print(f"  Local 2: {group2.get_local_state()}")
 
         # It shouldn't be possible that both groups are fully blocked
         assert group1.get_blocked() < 2
@@ -467,6 +480,7 @@ class RatedBoard(BoardModel):
         x, y, direction = instruction
 
         group = self.board_context[x][y].directions[direction]
+        self.groups.remove(group)
 
         # Unrate group
         # print("Removing: ", end="")
