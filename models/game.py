@@ -1,9 +1,8 @@
 from threading import Thread
 
-from models.board import BoardModel
+from models.board import BoardModel, RatedBoard
 from models.tile import TileModel
 from models.observable import Observable
-from models.raters import RatedBoard
 from .ai import RandomAI, MinimaxAI, RuleAI, CombinedAI
 
 
