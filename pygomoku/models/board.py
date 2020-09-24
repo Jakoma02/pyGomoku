@@ -99,6 +99,41 @@ class BoardModel:
             tile.state.set(TileModel.States.DISABLED)
         return self
 
+    def next_tile(self, r, c, direction):
+        class TileException(Exception):
+            pass
+
+        """
+        Returns next tile coordinates in given direction
+        :param r: Current tile row
+        :param c: Current tile column
+        :param direction: Direction
+        :return: Next tile coordinates
+        """
+        if direction == Direction.HORIZONTAL:
+            if c >= self.size - 1:
+                raise TileException(
+                    "There are no more tiles in this direction")
+            return r, c + 1
+
+        if direction == Direction.VERTICAL:
+            if r >= self.size - 1:
+                raise TileException(
+                    "There are no more tiles in this direction")
+            return r + 1, c
+
+        if direction == Direction.DIAGONAL_A:
+            if r >= self.size - 1 or c <= 0:
+                raise TileException(
+                    "There are no more tiles in this direction")
+            return r + 1, c - 1
+
+        if direction == Direction.DIAGONAL_B:
+            if r >= self.size - 1 or c >= self.size - 1:
+                raise TileException(
+                    "There are no more tiles in this direction")
+            return r + 1, c + 1
+
     def enable(self):
         """
         Make the board enabled/white
@@ -108,14 +143,11 @@ class BoardModel:
         return self
 
     def mark_win(self, win_info):
-        """
-        Mark winning five symbols
-        """
         tile, direction, symbol = win_info
         x, y = tile.x, tile.y
-        tile.state.set(TileModel.States.MARKED_AS_WIN)
+        self._board[x][y].state.set(TileModel.States.MARKED_AS_WIN)
         for _ in range(self.WINNING_COUNT - 1):
-            x, y = next_in_direction(self, tile, direction)
+            x, y = self.next_tile(x, y, direction)
             self._board[x][y].state.set(TileModel.States.MARKED_AS_WIN)
         return self
 
