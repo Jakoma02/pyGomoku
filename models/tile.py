@@ -4,6 +4,9 @@ from models.observable import Observable
 
 
 class TileModel:
+    """
+    A model of ONE tile
+    """
     __slots__ = ("symbol", "state", "x", "y")
 
     class Symbols(Enum):

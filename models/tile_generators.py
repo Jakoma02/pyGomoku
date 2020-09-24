@@ -1,3 +1,7 @@
+"""
+A module of helper board-related (mostly tile-generating)
+functions
+"""
 from .constants import Direction
 
 

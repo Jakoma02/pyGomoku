@@ -1,3 +1,7 @@
+"""
+A class with constant enums
+"""
+
 from enum import Enum, auto
 
 
@@ -15,8 +19,3 @@ class Direction(Enum):
             cls.DIAGONAL_A,
             cls.DIAGONAL_B
         ]
-
-class Symbols(Enum):
-    EMPTY = auto()
-    CROSS = auto()
-    CIRCLE = auto()

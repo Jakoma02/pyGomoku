@@ -4,6 +4,9 @@ from views.tileview import TileView
 
 
 class BoardView(tk.Frame):
+    """
+    A Tkinter frame containing tile views
+    """
     def __init__(self, master, size):
         super().__init__(master)
         self.master = master

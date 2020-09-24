@@ -2,6 +2,9 @@ import tkinter as tk
 
 
 class TileView(tk.Canvas):
+    """
+    A tkinter view displaying one tile
+    """
     def __init__(self, master, x, y):
         super().__init__(master, width=20, height=20, bg="white")
         self.x = x

@@ -1,3 +1,7 @@
+"""
+This module controls core game logic
+"""
+
 from threading import Thread
 
 from models.board import BoardModel, RatedBoard
@@ -7,6 +11,9 @@ from .ai import RandomAI, MinimaxAI, RuleAI, CombinedAI
 
 
 class Game:
+    """
+    The class controlling core game logic
+    """
     def __init__(self, size):
         self.board = RatedBoard(size)
         self.active = Observable(self, True)
@@ -21,9 +28,15 @@ class Game:
         self._update_ai()
 
     def play_move(self, x, y):
+        """
+        If active, place a symbol on (x, y) for the player
+        whose turn it is. Then (if not in multiplayer),
+        initiate AI move.
+        """
         if not self.active.get():
             return
-        symbol = TileModel.Symbols.CROSS if self.cross_turn else TileModel.Symbols.CIRCLE
+        symbol = TileModel.Symbols.CROSS if self.cross_turn \
+            else TileModel.Symbols.CIRCLE
 
         place_success = self.board.place(x, y, symbol)
         if not place_success:
@@ -56,10 +69,16 @@ class Game:
         self.play_move(x, y)
 
     def end_game(self):
+        """
+        Ends the game, disables all further move attempts
+        """
         self.active.set(False)
         self.board.disable()
 
     def new_game(self):
+        """
+        Start a new game
+        """
         self.ai.stop()  # If AI is currently looking for a move, termininate it
 
         self.board.reset()
@@ -74,6 +93,11 @@ class Game:
             ai_thread.start()
 
     def set_multiplayer(self, is_multiplayer):
+        """
+        Set multiplayer setting to `is_multiplayer`.
+
+        Starts a new game if needed.
+        """
         if self.multiplayer == is_multiplayer:
             return  # Nothing to do here
 
@@ -89,6 +113,11 @@ class Game:
             self.ai = CombinedAI(self.board, 4)
 
     def set_difficulty(self, difficulty):
+        """
+        Set difficulty setting to `difficulty`.
+
+        Starts a new game if needed.
+        """
         if self.difficulty == difficulty:
             return
 

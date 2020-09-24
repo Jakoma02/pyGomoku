@@ -1,8 +1,14 @@
+"""
+This module contains boards
+"""
+
 from collections import namedtuple
 from copy import deepcopy
 
 from models.tile import TileModel
-from .tile_generators import all_generators, all_tiles, direction_neighbors
+from .tile_generators import all_generators, all_tiles, direction_neighbors, \
+                             next_in_direction
+
 from .constants import Direction
 
 # (x1, y1), (x2, y2) are being merged, (x3, y3) is the position that merged
@@ -16,6 +22,10 @@ UndoExtend = namedtuple("UndoExtend", ["x", "y", "direction", "state"])
 
 
 class BoardModel:
+    """
+    Standard board model, containing TileModels.
+    Supports undoing moves.
+    """
     WINNING_COUNT = 5
     __slots__ = ("size", "_board", "_added_tiles_stack")
 
@@ -29,12 +39,18 @@ class BoardModel:
         return self._board[x]
 
     def reset(self):
+        """
+        Clear all symbols on board
+        """
         for row in self._board:
             for tile in row:
                 tile.reset()
         return self
 
     def place(self, x, y, symbol):
+        """
+        Places `symbol` at (x, y)
+        """
         tile = self._board[x][y]
         if not tile.empty():
             return False
@@ -51,36 +67,6 @@ class BoardModel:
 
         tile = self._board[x][y]
         tile.symbol.set(TileModel.Symbols.EMPTY)
-
-    def next_tile(self, r, c, direction):
-        class TileException(Exception):
-            pass
-
-        """
-        Returns next tile coordinates in given direction
-
-        (r, c) is row and column
-        """
-        if direction == Direction.HORIZONTAL:
-            if c >= self.size - 1:
-                raise TileException(
-                    "There are no more tiles in this direction")
-            return r, c + 1
-        elif direction == Direction.VERTICAL:
-            if r >= self.size - 1:
-                raise TileException(
-                    "There are no more tiles in this direction")
-            return r + 1, c
-        elif direction == Direction.DIAGONAL_A:
-            if r >= self.size - 1 or c <= 0:
-                raise TileException(
-                    "There are no more tiles in this direction")
-            return r + 1, c - 1
-        elif direction == Direction.DIAGONAL_B:
-            if r >= self.size - 1 or c >= self.size - 1:
-                raise TileException(
-                    "There are no more tiles in this direction")
-            return r + 1, c + 1
 
     def check_win(self):
         """
@@ -106,34 +92,50 @@ class BoardModel:
         return False
 
     def disable(self):
+        """
+        Make the board disabled/gray
+        """
         for tile in all_tiles(self):
             tile.state.set(TileModel.States.DISABLED)
         return self
 
     def enable(self):
+        """
+        Make the board enabled/white
+        """
         for tile in all_tiles(self):
             tile.state.set(TileModel.States.NONE)
         return self
 
     def mark_win(self, win_info):
+        """
+        Mark winning five symbols
+        """
         tile, direction, symbol = win_info
         x, y = tile.x, tile.y
-        self._board[x][y].state.set(TileModel.States.MARKED_AS_WIN)
+        tile.state.set(TileModel.States.MARKED_AS_WIN)
         for _ in range(self.WINNING_COUNT - 1):
-            x, y = self.next_tile(x, y, direction)
+            x, y = next_in_direction(self, tile, direction)
             self._board[x][y].state.set(TileModel.States.MARKED_AS_WIN)
         return self
 
     def clone(self):
+        """
+        Return a copy of the board
+        """
         # This could be subclassed
         cls = self.__class__
         cloned_board = cls(self.size)
 
-        cloned_board._board = [[tile.clone() for tile in row] for row in self._board]
+        cloned_board._board = [[tile.clone() for tile in row]
+                               for row in self._board]
         return cloned_board
 
 
 class SymbolGroup:
+    """
+    A group of symbols in ONE DIRECTION
+    """
     def __init__(self, symbol, blocked, x, y, direction):
         self._parent = None  # DFU-like, for merging the groups
         self._size = 1
@@ -144,12 +146,18 @@ class SymbolGroup:
         self.direction = direction
 
     def root(self):
+        """
+        Merging groups uses DFU-like structure, this finds its root
+        """
         if self._parent is None:
             return self
         else:
             return self._parent.root()
 
     def get_state(self):
+        """
+        Return the group state
+        """
         if self._parent is not None:
             return self.root().get_state()
 
@@ -160,6 +168,9 @@ class SymbolGroup:
         )
 
     def set_state(self, state):
+        """
+        Set the group state
+        """
         if self._parent is not None:
             self.root().set_state(state)
             return
@@ -170,7 +181,13 @@ class SymbolGroup:
         self._blocked = blocked
 
     def get_local_state(self):
-        # Useful for unmerge (don't lookup parent)
+        """
+        Return the state of this group instance, without
+        looking up the root
+
+        This is useful for unmerge (don't lookup parent)
+        """
+
         return (
             self._parent,
             self._size,
@@ -179,7 +196,12 @@ class SymbolGroup:
         )
 
     def force_local_state(self, local_state):
-        # Useful for unmerge (force parent)
+        """
+        Set the state of this group instance, without
+        looking up the root
+        This is useful for unmerge (force parent)
+        """
+
         parent, size, symbol, blocked = local_state
 
         self._parent = parent
@@ -188,27 +210,46 @@ class SymbolGroup:
         self._blocked = blocked
 
     def get_symbol(self):
+        """
+        Return the group symbol
+        """
         root = self.root()
         return root._symbol
 
     def get_size(self):
+        """
+        Return the group size
+        """
         root = self.root()
         return root._size
 
     def increment_size(self):
+        """
+        Increment the group size
+        """
         root = self.root()
         root._size += 1
 
     def get_blocked(self):
+        """
+        Return the number of blocked sides
+        """
         root = self.root()
         return root._blocked
 
     def increment_blocked(self):
+        """
+        Increase the number of blocked sides
+        """
         root = self.root()
         root._blocked += 1
 
     def merge(self, other):
-        # DFU-like union
+        """
+        Merge two groups.
+
+        This works like DFU union
+        """
         my_root = self.root()
         other_root = other.root()
 
@@ -222,6 +263,9 @@ class SymbolGroup:
         assert my_root._blocked <= 2
 
     def score(self):
+        """
+        Return group score
+        """
         size = self.get_size()
         blocked = self.get_blocked()
 
@@ -276,6 +320,10 @@ class PositionContext:
 
 
 class RatedBoard(BoardModel):
+    """
+    A better version of BoardModel that keeps track of its groups
+    and its rating (all the time)
+    """
     __slots__ = BoardModel.__slots__ + \
         ("board_context", "_context_undo_stack", "rating", "groups")
 

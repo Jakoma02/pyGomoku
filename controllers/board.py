@@ -1,3 +1,7 @@
+"""
+MVC controller of the game app
+"""
+
 from tkinter import Menu, BooleanVar, IntVar
 
 from models.game import Game
@@ -6,6 +10,9 @@ from views.board import BoardView
 
 
 class GameController:
+    """
+    The controller class
+    """
     SIZE = 15
 
     def __init__(self, master):
@@ -35,18 +42,27 @@ class GameController:
             for y in range(self.SIZE):
                 tile_view = self.view.tiles[x][y]
 
-                tile_view.bind_click(lambda event: self.tile_click(event.widget.x, event.widget.y))
-                tile_view.bind_mouse_enter(lambda event: self.tile_mouse_enter(event.widget.x, event.widget.y))
-                tile_view.bind_mouse_leave(lambda event: self.tile_mouse_leave(event.widget.x, event.widget.y))
+                tile_view.bind_click(
+                    lambda event: self.tile_click(
+                        event.widget.x, event.widget.y))
+                tile_view.bind_mouse_enter(
+                    lambda event: self.tile_mouse_enter(
+                        event.widget.x, event.widget.y))
+                tile_view.bind_mouse_leave(
+                    lambda event: self.tile_mouse_leave(
+                        event.widget.x, event.widget.y))
 
                 tile_model = self.game.board[x][y]
-                tile_model.symbol.add_callable(lambda value, parent: self.symbol_changed(parent, value))
-                tile_model.state.add_callable(lambda value, parent: self.state_changed(parent, value))
+                tile_model.symbol.add_callable(
+                    lambda value, parent: self.symbol_changed(parent, value))
+                tile_model.state.add_callable(
+                    lambda value, parent: self.state_changed(parent, value))
 
     def _setup_menu(self):
         self.menu = Menu(self.master)
         self.gamemenu = Menu(self.menu, tearoff=0)
-        self.gamemenu.add_command(label="New game...", command=self.game.new_game)
+        self.gamemenu.add_command(
+            label="New game...", command=self.game.new_game)
         self.gamemenu.add_separator()
         self.gamemenu.add_checkbutton(label="Multiplayer",
                                       variable=self.multiplayer_option_var,
@@ -85,22 +101,37 @@ class GameController:
         self.game.set_difficulty(difficulty)
 
     def get_tile_view(self, x, y):
+        """
+        Return tile view on coordinates (x, y)
+        """
         return self.view.tiles[x][y]
 
     def tile_click(self, x, y):
+        """
+        Tile click event handled
+        """
         self.game.play_move(x, y)
 
     def tile_mouse_enter(self, x, y):
+        """
+        Tile mouse enter event handler
+        """
         tile = self.game.board[x][y]
         if self.game.active.get():
             tile.state.set(TileModel.States.PRELIT)
 
     def tile_mouse_leave(self, x, y):
+        """
+        Tile mouse leave event handler
+        """
         tile = self.game.board[x][y]
         if self.game.active.get():
             tile.state.set(TileModel.States.NONE)
 
     def symbol_changed(self, parent, symbol):
+        """
+        Tile symbol change handler
+        """
         tile_view = self.get_tile_view(parent.x, parent.y)
         if symbol == TileModel.Symbols.EMPTY:
             tile_view.reset()
@@ -110,6 +141,9 @@ class GameController:
             tile_view.draw_circle()
 
     def state_changed(self, parent, value):
+        """
+        Tile state change handler
+        """
         tile_view = self.get_tile_view(parent.x, parent.y)
         if value == TileModel.States.NONE:
             tile_view.no_prelight()
