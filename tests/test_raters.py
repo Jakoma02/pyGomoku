@@ -1,7 +1,7 @@
 import unittest
 
 from models.board import BoardModel
-from models.static_raters import SimpleRater
+from models.raters import SimpleRater
 from models.tile import TileModel
 
 
