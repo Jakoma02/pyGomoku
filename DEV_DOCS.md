@@ -39,11 +39,11 @@ Ohodnocení jednotlivé souvislé skupiny symbolů se řídí následující tab
 
 Pro každý směr zvlášť jsou nalezeny souvislé skupiny. Celkové ohodnocení pozice je pak
 dáno jako
-$$
-R := \sum_{p \in G_x} r(p) - \sum_{q \in G_o} r(q),
-$$
-kde $G_x$ je množina všech souvislých skupin křížků, $G_o$ množina
-všech souvislých skupin koleček a $r(x)$ ohodnocení skupiny $x$.
+<img src="https://render.githubusercontent.com/render/math?math=R := \sum_{p \in G_x} r(p) - \sum_{q \in G_o} r(q)">,
+kde <img src="https://render.githubusercontent.com/render/math?math=G_x"> je množina všech souvislých skupin křížků,
+<img src="https://render.githubusercontent.com/render/math?math=G_o"> množina
+všech souvislých skupin koleček a <img src="https://render.githubusercontent.com/render/math?math=r(x)">
+ohodnocení skupiny <img src="https://render.githubusercontent.com/render/math?math=x">.
 
 Pro úsporu času se údaje o jednotlivých skupinách i hodnocení udržuje průběžně,
 po každém tahu pouze opraví vlastnosti skupin sousedících se zahraným polem.
