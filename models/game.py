@@ -38,22 +38,31 @@ class Game:
         if self.multiplayer:
             self.player_turn = not self.player_turn
             if not self.player_turn:
-                t = Thread(target=self._ai_turn)
-                t.start()
+                ai_thread = Thread(target=self._ai_turn)
+                ai_thread.start()
 
     def _ai_turn(self):
         self.active.set(False)
         self.board.disable()
-        x, y = self.ai.get_move(self.cross_turn)
+
+        move = self.ai.get_move(self.cross_turn)
+
+        if self.ai.stopped:
+            return
+
+        x, y = move
+
         self.active.set(True)
-        self.play_move(x, y)
         self.board.enable()
+        self.play_move(x, y)
 
     def end_game(self):
         self.active.set(False)
         self.board.disable()
 
     def new_game(self):
+        self.ai.stop()  # If AI is currently looking for a move, termininate it
+
         self.board.reset()
         self.active.set(True)
 
@@ -61,5 +70,6 @@ class Game:
         self.player_starting = not self.player_starting
         self.cross_turn = True
 
-        if not self.player_turn:
-            self._ai_turn()
+        if self.multiplayer and not self.player_turn:
+            ai_thread = Thread(target=self._ai_turn)
+            ai_thread.start()

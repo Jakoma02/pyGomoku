@@ -6,19 +6,35 @@ from .tile_generators import all_empty_tiles, relevant_tiles, relevant_usage, \
 from .tile import TileModel
 
 
-class RandomAI:
+class AbstractAI:
     def __init__(self, board):
         self.board = board
+        self.stopped = False
 
     def get_move(self, cross_turn):
+        self.stopped = False
+
+    def stop(self):
+        """
+        Terminate
+        """
+        self.stopped = True
+
+
+class RandomAI(AbstractAI):
+    def get_move(self, cross_turn):
+        super().get_move(cross_turn)
+
         relevant = list(relevant_tiles(self.board))
 
         move = choice(relevant)
+
         return (move.x, move.y)
 
-class MinimaxAI:
+class MinimaxAI(AbstractAI):
     def __init__(self, board, depth):
-        self.board = board
+        super().__init__(board)
+
         self.depth = depth
         self.rater = RandomRater()
         # self.rater = PositionRater()
@@ -62,6 +78,9 @@ class MinimaxAI:
             rating = board.rating
             position_options.append((new_tile, rating))
             board.undo()
+
+            if self.stopped:
+                return None
             
         if cross_turn:
             key = lambda x: -x[1]
@@ -82,11 +101,17 @@ class MinimaxAI:
         minimax_results = []
         for new_tile, rating in position_options:
         # for new_tile in relevant_tiles(board):
-            # TODO: Dont really change the TileModels, the gui doesnt have to get updated
+
+            if self.stopped:
+                return None
+
             # Add new symbol to board (temporarily)
             board.place(new_tile.x, new_tile.y, symbol)
             minimax_result = self.minimax(board, depth - 1, not cross_turn,
                                           alpha=alpha, beta=beta, last_move_tile=new_tile)
+
+            if self.stopped:
+                return None
 
             result_rating = minimax_result[1]
 
@@ -124,21 +149,27 @@ class MinimaxAI:
         return best_tile
 
     def get_move(self, cross_turn):
+        AbstractAI.get_move(self, cross_turn)
+
         detached_board = self.board.clone()
         # detached_board = self.board  # Right, this is very much attached... :)
-        tile, rating = self.minimax(detached_board, self.depth, cross_turn, alpha=float("-inf"), beta=float("inf"))
+        minimax_result = self.minimax(detached_board, self.depth, cross_turn, alpha=float("-inf"), beta=float("inf"))
+
+        if minimax_result is None:
+            # Was stopped
+            return None
+
+        tile, rating = minimax_result
 
         role = "maximizing" if cross_turn else "minimizing"
         print(f"Chose position with rating {rating}, was {role}")
         print(f"Place calls: {detached_board.place_call_count}")
         print(f"Relevat tiles calls: {relevant_usage()}")
+
         return tile.x, tile.y
 
 
-class RuleAI:
-    def __init__(self, board):
-        self.board = board
-
+class RuleAI(AbstractAI):
     def find_attack(self, symbol, min_size, unblocked):
         for group in self.board.groups:
             size = group.get_size()
@@ -179,6 +210,8 @@ class RuleAI:
         return end_tile
 
     def get_move(self, cross_turn):
+        super().get_move(cross_turn)
+
         if cross_turn:
             my_symbol = TileModel.Symbols.CROSS
             other_symbol = TileModel.Symbols.CIRCLE
@@ -238,6 +271,8 @@ class RuleAI:
 
 class CombinedAI(MinimaxAI, RuleAI):
     def get_move(self, cross_turn):
+        AbstractAI.get_move(self, cross_turn)
+
         if cross_turn:
             my_symbol = TileModel.Symbols.CROSS
             other_symbol = TileModel.Symbols.CIRCLE
@@ -268,4 +303,4 @@ class CombinedAI(MinimaxAI, RuleAI):
 
         # Let minimax decide ho to handle opponent open thirds
 
-        return super().get_move(cross_turn)
+        return MinimaxAI.get_move(self, cross_turn)
