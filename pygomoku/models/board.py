@@ -303,7 +303,10 @@ class SymbolGroup:
 
         score = 0
 
-        if blocked == 2:
+        if size >= 5:
+            score = 99999
+
+        elif blocked == 2:
             score = 0  # It is useless in this direction
 
         elif size == 1:
@@ -331,7 +334,7 @@ class SymbolGroup:
                 score = 5000
 
         else:
-            score = 99999
+            score = 0  # Should never happen
 
         if self.get_symbol() == TileModel.Symbols.CIRCLE:
             score = -score
