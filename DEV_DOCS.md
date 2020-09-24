@@ -1,12 +1,12 @@
 # Algoritmy pro AI
 
- 1) RandomAI
+ 1) **RandomAI**
 
-    RandomAI vybere v každém tahu náhodné **relevantní pole**
-    - tj. takové, které má ve vzdálenosti nejvýše 2 jiný symbol.
+    RandomAI vybere v každém tahu náhodné **relevantní pole** - tj.
+    takové, které má ve vzdálenosti nejvýše 2 jiný symbol.
     Pokud je hrací pole prázdné, hraje doprostřed.
 
- 2) RuleAI
+ 2) **RuleAI**
 
     RuleAI se řídí několika jednoduchými pravidly:
 
@@ -18,13 +18,13 @@
 	6) Pokud má soupeř z obou stran otevřenou souvislou dvojku, zablokuj ji
 	7) Jinak zahrej náhodný relevantní tah
 
- 3) MinimaxAI
+ 3) **MinimaxAI**
 
     Tento algoritmus prochází strom hry pomocí algoritmus minimaxu. Je zde využito
     alpha-beta prořezávání. Z časových důvodů algoritmus v každé hloubce vybere
     30 nejperspektivnějších pozic, které dále prozkoumává.
 
- 4) CombinedAI
+ 4) **CombinedAI**
 
     CombinedAI je kombinací předchozích dvou algoritmů. Nejprve ověří, že ani jedna
     ze stran nemá souvislou čtyřku a AI nemá souvislou trojku, teprve pak pokračuje
