@@ -1,3 +1,5 @@
+from threading import Thread
+
 from models.board import BoardModel
 from models.tile import TileModel
 from models.observable import Observable
@@ -36,11 +38,16 @@ class Game:
         if self.multiplayer:
             self.player_turn = not self.player_turn
             if not self.player_turn:
-                self._ai_turn()
+                t = Thread(target=self._ai_turn)
+                t.start()
 
     def _ai_turn(self):
+        self.active.set(False)
+        self.board.disable()
         x, y = self.ai.get_move(self.cross_turn)
+        self.active.set(True)
         self.play_move(x, y)
+        self.board.enable()
 
     def end_game(self):
         self.active.set(False)

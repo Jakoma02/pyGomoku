@@ -50,17 +50,21 @@ def diagonal_b_generator(board):
         yield diag_generator(i)
 
 
+def all_tiles(board):
+    for x in range(board.size):
+        for y in range(board.size):
+            yield board[x][y]
+
+
 def all_empty_tiles(board):
     """
     Generates all empty tiles, row by row
     :param board:
     :return:
     """
-    for x in range(board.size):
-        for y in range(board.size):
-            tile = board[x][y]
-            if tile.empty():
-                yield board[x][y]
+    for tile in all_tiles(board):
+        if tile.empty():
+            yield tile
 
 
 def all_generators(board):

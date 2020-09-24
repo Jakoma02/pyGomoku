@@ -1,5 +1,5 @@
 from models.tile import TileModel
-from .tile_generators import all_generators
+from .tile_generators import all_generators, all_tiles
 from .constants import Direction
 
 
@@ -91,9 +91,13 @@ class BoardModel:
         return False
 
     def disable(self):
-        for row in self._board:
-            for tile in row:
-                tile.state.set(TileModel.States.DISABLED)
+        for tile in all_tiles(self):
+            tile.state.set(TileModel.States.DISABLED)
+        return self
+
+    def enable(self):
+        for tile in all_tiles(self):
+            tile.state.set(TileModel.States.NONE)
         return self
 
     def mark_win(self, win_info):
