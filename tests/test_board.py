@@ -1,6 +1,6 @@
-from models.board import BoardModel
-from models.constants import Direction
-from models.tile import TileModel
+from pygomoku.models.board import BoardModel
+from pygomoku.models.constants import Direction
+from pygomoku.models.tile import TileModel
 import unittest as ut
 
 

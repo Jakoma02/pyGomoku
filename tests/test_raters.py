@@ -1,8 +1,8 @@
 import unittest
 
-from models.board import BoardModel
-from models.raters import SimpleRater
-from models.tile import TileModel
+from pygomoku.models.board import BoardModel
+from pygomoku.models.raters import SimpleRater
+from pygomoku.models.tile import TileModel
 
 
 class TestSimpleRater(unittest.TestCase):

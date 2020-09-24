@@ -1,8 +1,9 @@
 import unittest
 
-from models.board import BoardModel
-from models.tile import TileModel
-from models.tile_generators import horizontal_generator, vertical_generator, diagonal_a_generator, diagonal_b_generator, \
+from pygomoku.models.board import BoardModel
+from pygomoku.models.tile import TileModel
+from pygomoku.models.tile_generators import horizontal_generator, \
+    vertical_generator, diagonal_a_generator, diagonal_b_generator, \
     all_empty_tiles
 
 

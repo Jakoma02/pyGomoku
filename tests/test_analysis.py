@@ -1,8 +1,8 @@
 import unittest
 
-from models import analysis
-from models.board import BoardModel
-from models.tile import TileModel
+from pygomoku.models import analysis
+from pygomoku.models.board import BoardModel
+from pygomoku.models.tile import TileModel
 
 
 class TestCounting(unittest.TestCase):
