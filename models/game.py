@@ -10,16 +10,16 @@ from .ai import RandomAI, MinimaxAI, RuleAI, CombinedAI
 class Game:
     def __init__(self, size):
         self.board = RatedBoard(size)
-        # self.board = BoardModel(size)
         self.active = Observable(self, True)
         self.cross_turn = True
         self.player_turn = True
-        self.player_starting = True  # This will be flipped in the beginning
-        self.multiplayer = True
-        # self.ai = MinimaxAI(self.board, 4)
-        # self.ai = RandomAI(self.board)
-        # self.ai = RuleAI(self.board)
-        self.ai = CombinedAI(self.board, 4)
+        self.player_starting = True
+
+        self.multiplayer = False
+        self.difficulty = 1
+
+        self.ai = None
+        self._update_ai()
 
     def play_move(self, x, y):
         if not self.active.get():
@@ -35,7 +35,7 @@ class Game:
             self.board.mark_win(win_info)
             return
         self.cross_turn = not self.cross_turn
-        if self.multiplayer:
+        if not self.multiplayer:
             self.player_turn = not self.player_turn
             if not self.player_turn:
                 ai_thread = Thread(target=self._ai_turn)
@@ -70,6 +70,31 @@ class Game:
         self.player_starting = not self.player_starting
         self.cross_turn = True
 
-        if self.multiplayer and not self.player_turn:
+        if not self.multiplayer and not self.player_turn:
             ai_thread = Thread(target=self._ai_turn)
             ai_thread.start()
+
+    def set_multiplayer(self, is_multiplayer):
+        if self.multiplayer == is_multiplayer:
+            return  # Nothing to do here
+
+        self.multiplayer = is_multiplayer
+        self.new_game()
+
+    def _update_ai(self):
+        if self.difficulty == 1:
+            self.ai = RandomAI(self.board)
+        elif self.difficulty == 2:
+            self.ai = RuleAI(self.board)
+        elif self.difficulty == 3:
+            self.ai = CombinedAI(self.board, 4)
+
+    def set_difficulty(self, difficulty):
+        if self.difficulty == difficulty:
+            return
+
+        self.difficulty = difficulty
+        self._update_ai()
+
+        if not self.multiplayer:
+            self.new_game()

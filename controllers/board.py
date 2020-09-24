@@ -1,4 +1,4 @@
-from tkinter import Menu
+from tkinter import Menu, BooleanVar, IntVar
 
 from models.game import Game
 from models.tile import TileModel
@@ -9,12 +9,24 @@ class GameController:
     SIZE = 15
 
     def __init__(self, master):
+
+        self.multiplayer_option_var = BooleanVar()
+        self.multiplayer_option_var.set(False)
+
+        self.difficulty_option_var = IntVar()
+        self.difficulty_option_var.set(3)
+
         self.master = master
         self.game = Game(self.SIZE)
         self.view = BoardView(master, self.SIZE)
         self.view.place(relx=0.5, rely=0.5, anchor="c")
+
         self._setup_board()
         self._setup_menu()
+
+        self._update_multiplayer_setting()
+        self._update_difficulty_setting()
+
         self.game.new_game()
 
     def _setup_board(self):
@@ -35,9 +47,42 @@ class GameController:
         self.menu = Menu(self.master)
         self.gamemenu = Menu(self.menu, tearoff=0)
         self.gamemenu.add_command(label="New game...", command=self.game.new_game)
+        self.gamemenu.add_separator()
+        self.gamemenu.add_checkbutton(label="Multiplayer",
+                                      variable=self.multiplayer_option_var,
+                                      command=self._update_multiplayer_setting)
+
         self.menu.add_cascade(menu=self.gamemenu, label="Game")
 
+        self.difficultymenu = Menu(self.menu, tearoff=0)
+        self.difficultymenu.add_radiobutton(
+            label="Very very easy",
+            variable=self.difficulty_option_var,
+            value=1,
+            command=self._update_difficulty_setting)
+        self.difficultymenu.add_radiobutton(
+            label="Very easy",
+            variable=self.difficulty_option_var,
+            value=2,
+            command=self._update_difficulty_setting)
+        self.difficultymenu.add_radiobutton(
+            label="Easy",
+            variable=self.difficulty_option_var,
+            value=3,
+            command=self._update_difficulty_setting)
+        self.menu.add_cascade(menu=self.difficultymenu, label="Difficulty")
+
         self.master.config(menu=self.menu)
+
+    def _update_multiplayer_setting(self):
+        is_multiplayer = self.multiplayer_option_var.get()
+
+        self.game.set_multiplayer(is_multiplayer)
+
+    def _update_difficulty_setting(self):
+        difficulty = self.difficulty_option_var.get()
+
+        self.game.set_difficulty(difficulty)
 
     def get_tile_view(self, x, y):
         return self.view.tiles[x][y]
