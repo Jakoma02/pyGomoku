@@ -12,7 +12,7 @@ class GameController:
         self.master = master
         self.game = Game(self.SIZE)
         self.view = BoardView(master, self.SIZE)
-        self.view.pack()
+        self.view.place(relx=0.5, rely=0.5, anchor="c")
         self._setup_board()
         self._setup_menu()
         self.game.new_game()
