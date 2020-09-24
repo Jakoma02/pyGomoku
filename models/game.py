@@ -12,6 +12,7 @@ class Game:
         self.active = Observable(self, True)
         self.cross_turn = True
         self.player_turn = True
+        self.player_starting = True  # This will be flipped in the beginning
         self.multiplayer = True
         # self.ai = MinimaxAI(self.board, 4)
         # self.ai = RandomAI(self.board)
@@ -48,5 +49,9 @@ class Game:
     def new_game(self):
         self.board.reset()
         self.active.set(True)
+
+        self.player_turn = self.player_starting
+        self.player_starting = not self.player_starting
+
         if not self.player_turn:
             self._ai_turn()

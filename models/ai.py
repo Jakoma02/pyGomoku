@@ -69,7 +69,7 @@ class MinimaxAI:
             key = lambda x: x[1]
 
         position_options.sort(key=key)
-        position_options = position_options[:20]  # 20 (heuristically) best moves
+        position_options = position_options[:30]  # 30 (heuristically) best moves
 
         # print("Chosen adepts:")
         # for tile, rating in position_options:
