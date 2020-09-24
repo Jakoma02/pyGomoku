@@ -52,6 +52,7 @@ class Game:
 
         self.player_turn = self.player_starting
         self.player_starting = not self.player_starting
+        self.cross_turn = True
 
         if not self.player_turn:
             self._ai_turn()
