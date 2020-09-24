@@ -12,8 +12,10 @@ class GameController:
         self.master = master
         self.game = Game(self.SIZE)
         self.view = BoardView(master, self.SIZE)
+        self.view.pack()
         self._setup_board()
         self._setup_menu()
+        self.game.new_game()
 
     def _setup_board(self):
         # Bind tiles

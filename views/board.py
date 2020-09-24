@@ -11,7 +11,7 @@ class BoardView(tk.Frame):
         for x in range(size):
             row = []
             for y in range(size):
-                tile = TileView(master, x, y)
+                tile = TileView(self, x, y)
                 tile.grid(row=x, column=y)
                 row.append(tile)
             self.tiles.append(row)
